@@ -1,0 +1,82 @@
+// Miyco Lite - Prisma Schema
+// SQLite + Prisma. Zero-config database for OSS demo.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Worker {
+  id          Int          @id @default(autoincrement())
+  name        String
+  email       String       @unique
+  role        String       @default("TECHNICIAN") // TECHNICIAN, EXPERT
+  isActive    Boolean      @default(true)
+  workOrders  WorkOrder[]
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model WorkOrder {
+  id              Int       @id @default(autoincrement())
+  woNumber        String    @unique
+  title           String
+  description     String?
+  priority        String    @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT, CRITICAL
+  status          String    @default("PENDING") // PENDING, ASSIGNED, IN_PROGRESS, COMPLETED, CANCELLED
+  currentStageId  Int?      // FK to WorkflowStage (current step in workflow)
+
+  // Location
+  locationName    String?
+  address         String?
+  latitude        Float?
+  longitude       Float?
+
+  // Assignments
+  assignedToId    Int?
+  assignedTo      Worker?   @relation(fields: [assignedToId], references: [id])
+
+  // Workflow audit trail
+  stageHistory    StageLog[]
+
+  scheduledDate   DateTime?
+  completedAt     DateTime?
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model WorkflowStage {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique            // e.g. "Intake", "Dispatch", "On-Site", "Completed"
+  slug        String    @unique            // e.g. "intake"
+  description String?
+  order       Int       @default(0)        // sort order in workflow
+  color       String    @default("slate")  // badge color (slate, indigo, emerald, etc.)
+  isActive    Boolean   @default(true)
+  isInitial   Boolean   @default(false)    // starting stage for new work orders
+  isFinal     Boolean   @default(false)    // terminal stage (e.g. Completed)
+  requiresAssignee Boolean @default(false) // whether moving into this stage requires an assigned worker
+
+  logs        StageLog[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model StageLog {
+  id          Int           @id @default(autoincrement())
+  workOrderId Int
+  workOrder   WorkOrder     @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  stageId     Int
+  stage       WorkflowStage @relation(fields: [stageId], references: [id])
+  note        String?
+  movedBy     String?       // free-text actor (in real app this would be auth user id/name)
+
+  createdAt   DateTime      @default(now())
+}
