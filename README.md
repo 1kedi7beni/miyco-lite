@@ -60,7 +60,7 @@ Miyco Lite is just the tip of the iceberg. The full SaaS version of **Miyco FSM*
 - Customer Portal & Invoicing
 - Multi-tenant Architecture
 
-Visit [miyco.io](https://miyco.io) to learn more.
+Visit [miyco.com](https://miyco.com) to learn more.
 
 ## 📄 License
 This project is licensed under the [MIT License](LICENSE).
